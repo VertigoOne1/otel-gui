@@ -27,10 +27,10 @@ Drop-in replacement for a collector endpoint — point your OTLP exporter at it 
 
 - **Zero config** — listens on port 4318, the standard OTLP/HTTP port. Most exporters work without changing a single setting
 - **OTLP JSON & Protobuf** — accepts both `application/json` and `application/x-protobuf` payloads
-- **Real-time streaming** — traces, logs, and metrics all update live over SSE (Server-Sent Events) using an incremental snapshot + delta protocol, so views refresh in place without flicker or polling
+- **Real-time streaming** — traces, logs, metrics, and the service map all update live over SSE (Server-Sent Events) using an incremental snapshot + delta protocol, so views refresh in place without flicker or polling
 - **Metrics** — dedicated Metrics tab accepting OTLP metrics (`POST /v1/metrics`): gauges, sums (with server-computed per-second rates and counter-reset detection), histograms, exponential histograms, and summaries; flicker-free time-series charts (uPlot), histogram distribution + heatmap views, and per-series filtering
 - **Waterfall timeline** — Honeycomb-style span waterfall with resizable name column and sidebar
-- **Service map** — auto-generated graph of cross-service calls with error rates and latency (p50/p99)
+- **Service map** — auto-generated graph of cross-service calls with error rates and latency (p50/p99); streams live over SSE with a stable, **expand-only** layout (placed nodes never move — new services append and the canvas grows) over a cumulative topology that never ages out
 - **Search & filter** — filter lists by text, service, status, and duration range; search spans inside a trace based on attributes, events, and span name or id
 - **Import/export traces** — export one trace, filtered traces, or selected traces as OTLP JSON envelope; import from OTLP JSON or otel-gui export files with metadata preview before confirmation
 - **Bulk list actions** — trace and log lists support multi-select export and split delete actions (`Clear All` + `Delete Selected (n)`)

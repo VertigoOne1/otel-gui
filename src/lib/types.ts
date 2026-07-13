@@ -111,6 +111,7 @@ export interface TraceStore {
   getTraceList(limit?: number): TraceListItem[]
   getTrace(traceId: string): StoredTrace | undefined
   getServiceMap(traceId?: string): ServiceMapData
+  getServiceMapSeq(): number
 
   // Trace writes
   clearTraces(): void
@@ -145,10 +146,52 @@ export interface TraceStore {
 
   // Infrastructure
   subscribe(fn: () => void): () => void
+  /**
+   * Diagnostic snapshot of every internal collection size. Optional so external
+   * backends need not implement it; the in-memory store always does. Used by the
+   * periodic stats logger to spot unbounded growth (see traceStore.ts).
+   */
+  getStoreStats?(): StoreStats
   readonly maxTraces: number
   readonly maxLogs: number
   readonly maxMetrics: number
   readonly maxMetricPoints: number
+}
+
+/**
+ * A point-in-time count of every server-side collection that could grow. Every
+ * field is a map/set size (or a derived total) so a rising number pinpoints
+ * exactly which store is accumulating.
+ */
+export interface StoreStats {
+  traces: number
+  logs: number
+  metrics: number
+  /** Sum of series across all metrics — the primary metric-cardinality signal. */
+  metricSeries: number
+  /** Largest single metric's series count, with its key, to name the offender. */
+  maxSeriesInMetric: number
+  maxSeriesMetricKey: string | null
+  /** Sum of retained points across all series (bounded by maxMetricPoints each). */
+  metricPoints: number
+  serviceMapNodes: number
+  serviceMapEdges: number
+  /** Service-map per-span bookkeeping ledgers (pruned on trace eviction). */
+  serviceMapSpanService: number
+  serviceMapCountedNodeSpans: number
+  serviceMapResolvedEdgeSpans: number
+  serviceMapPendingChildren: number
+  /** Log/trace bookkeeping maps (should track logs/traces, not outgrow them). */
+  traceLogCounts: number
+  logTraceIdByLogId: number
+  logSeqById: number
+  metricSeqById: number
+  /**
+   * Active change-notification subscribers. In practice one per open SSE
+   * connection — if this climbs without bound, streams are not unsubscribing on
+   * disconnect (a listener/timer/controller leak outside the data stores).
+   */
+  subscribers: number
 }
 
 // Span tree node for waterfall rendering

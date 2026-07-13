@@ -1,5 +1,5 @@
-// Unified SSE endpoint — multiplexes traces, logs, and metrics onto a SINGLE
-// connection.
+// Unified SSE endpoint — multiplexes traces, logs, metrics, and the service map
+// onto a SINGLE connection.
 //
 // Browsers cap HTTP/1.1 at ~6 connections per origin. Previously the app opened
 // a separate SSE stream per signal (/api/traces|logs/stream), each holding one
@@ -25,6 +25,7 @@ export const GET: RequestHandler = async () => {
   let lastLogRemovalSeq = traceStore.getLogRemovalSeq()
   let lastMetricSeq = 0
   let lastMetricRemovalSeq = traceStore.getMetricRemovalSeq()
+  let lastMapSeq = -1
 
   function cleanup() {
     unsubscribe?.()
@@ -105,12 +106,21 @@ export const GET: RequestHandler = async () => {
         return true
       }
 
+      // ── service map ─────────────────────────────────────────────────────
+      const sendMapSnapshot = () => {
+        const data = traceStore.getServiceMap()
+        lastMapSeq = traceStore.getServiceMapSeq()
+        send('map-count', String(data.nodes.length))
+        return send('map-snapshot', JSON.stringify(data))
+      }
+
       // Send full current state for every sub-stream on connect.
       sendTraces()
       sendLogCount()
       sendLogSnapshot()
       sendMetricCount()
       sendMetricSnapshot()
+      sendMapSnapshot()
 
       // Backpressure-aware flush. A web ReadableStream's enqueue() never blocks —
       // it just drives desiredSize negative and keeps buffering the encoded bytes
@@ -144,6 +154,11 @@ export const GET: RequestHandler = async () => {
           if (!sendMetricSnapshot()) return
         } else if (!sendMetricAppend()) {
           return
+        }
+
+        // service map: small derived aggregate — re-send only when it changed.
+        if (traceStore.getServiceMapSeq() !== lastMapSeq) {
+          if (!sendMapSnapshot()) return
         }
       }
       flushIfReady = flush

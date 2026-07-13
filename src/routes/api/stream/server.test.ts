@@ -86,6 +86,8 @@ describe('GET /api/stream (multiplexed SSE)', () => {
       'event: logs-snapshot',
       'event: metrics-count',
       'event: metrics-snapshot',
+      'event: map-count',
+      'event: map-snapshot',
     ])
 
     expect(text).toContain('event: traces')
@@ -93,6 +95,8 @@ describe('GET /api/stream (multiplexed SSE)', () => {
     expect(text).toContain('event: logs-snapshot')
     expect(text).toContain('event: metrics-count')
     expect(text).toContain('event: metrics-snapshot')
+    expect(text).toContain('event: map-count')
+    expect(text).toContain('event: map-snapshot')
   })
 
   it('includes ingested trace data in the initial traces event', async () => {

@@ -16,6 +16,10 @@ export const SSE_EVENT_NAMES = [
   'metrics-snapshot',
   // only metrics touched since the client's cursor
   'metrics-append',
+  // current service-node count (tab badge)
+  'map-count',
+  // full service map ({ nodes, edges })
+  'map-snapshot',
 ] as const
 
 export type SSEEventName = (typeof SSE_EVENT_NAMES)[number]
